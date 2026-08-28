@@ -1,11 +1,24 @@
 # Tracer classification (FDG vs. PSMA routing)
 
-Per the paper, a dedicated classifier inspects each incoming study and routes it to the FDG- or PSMA-specific
-branch (see [`../stage1_lesion_segmentation`](../stage1_lesion_segmentation) /
+Each incoming study is routed to the FDG- or PSMA-specific branch (see
+[`../stage1_lesion_segmentation`](../stage1_lesion_segmentation) /
 [`../stage2_interactive_refinement`](../stage2_interactive_refinement)) before segmentation runs.
 
-**Status: not included in this repository snapshot.** During development, FDG and PSMA cases were routed using
-the dataset's tracer metadata directly rather than a learned classifier, since tracer identity is known at
-training time. The two branches were trained, validated, and ensembled completely independently
-(never mixed) on that basis. Code for a standalone tracer-classification model — needed for e.g. a submission
-container that cannot rely on metadata — is planned but not yet added here.
+**This repository does not train its own tracer classifier.** Routing uses the pretrained tracer classifier
+published by Kalisch et al. for their AutoPET III submission:
+
+- Repo: [hakal104/autoPETIII](https://github.com/hakal104/autoPETIII/) (MIT License) — see `classify_pet.py`
+  and pretrained weights (`tracer_classifier.pt`, linked from that repo's README).
+- Paper: H. Kalisch, F. Hörst, K. Herrmann, J. Kleesiek, C. Seibold, *"AutoPET III challenge: Incorporating
+  anatomical knowledge into nnUNet for lesion segmentation in PET/CT,"* [arXiv:2409.12155](https://arxiv.org/abs/2409.12155).
+
+## Usage
+
+1. Fetch `classify_pet.py` and `tracer_classifier.pt` from the repo above (see its README for the weights link).
+2. Run it on each incoming PET/CT study to get an FDG/PSMA label.
+3. Feed FDG-labeled studies into the FDG branch and PSMA-labeled studies into the PSMA branch of
+   [`../stage1_lesion_segmentation`](../stage1_lesion_segmentation).
+
+During our own training/validation, tracer identity was instead taken directly from the AutoPET dataset
+metadata (known at training time), so FDG and PSMA models were trained and validated fully independently
+without needing the classifier. The classifier above is what is used to route un-labeled cases at inference.

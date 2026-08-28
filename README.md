@@ -1,7 +1,7 @@
 # MEDAI — Tracer-Aware Interactive Segmentation for AutoPET V
 
 **MEDAI**'s submission to the [AutoPET V challenge](https://autopet-v.grand-challenge.org/) (interactive
-lesion segmentation in whole-body PET/CT). The pipeline pairs a masked-autoencoder-pretrained 3D
+lesion segmentation in whole-body PET/CT). The pipeline pairs a self-supervised masked-autoencoder-pretrained 3D
 [STU-Net](https://github.com/uni-medical/STU-Net) backbone with tracer-specific (FDG/PSMA) branches, an
 anatomical organ prior, and a second interactive stage that refines the initial prediction from sparse
 corrective scribbles — built inside a modified [nnU-Net v2.2](https://github.com/MIC-DKFZ/nnUNet) framework.
@@ -22,16 +22,17 @@ Pretrain (self-supervised)  →  Tracer routing  →  Stage 1 (initial segmentat
    representations before any lesion labels are used, masking CT and PET **independently** (asynchronous
    masking) so the encoder must exploit cross-modal, not just spatial, redundancy.
 2. **Tracer routing** (`tracer_classification/`): each study is routed to an FDG- or PSMA-specific branch,
-   since the two tracers differ substantially in uptake pattern and lesion appearance — see that folder for
-   how routing was actually done in this snapshot (metadata-based, not yet a standalone classifier model).
+   since the two tracers differ substantially in uptake pattern and lesion appearance. Routing uses the
+   pretrained tracer classifier published by [Kalisch et al.](https://github.com/hakal104/autoPETIII/) for
+   their AutoPET III submission — see that folder for details and citation.
 3. **Stage 1 — initial segmentation** (`stage1_lesion_segmentation/`): PET + CT + an anatomical organ prior
    (`organ_segmentation/`) are consumed to produce an initial lesion mask, using an MAE-pretrained STU-Net
    fine-tuned with a 3-phase curriculum schedule.
 4. **Stage 2 — interactive refinement** (`stage2_interactive_refinement/`): the Stage‑1 prediction is combined
    with cumulative foreground/background scribbles (simulated during training via skeletonization of the
    ground-truth mask) and refined by a second network initialized from the Stage‑1 checkpoint.
-5. **Ensembling** (`ensembling/`): fold- and checkpoint-level ensembling improves robustness across
-   interaction steps and cohorts. FDG and PSMA are always kept separate.
+5. **Ensembling**: fold- and checkpoint-level ensembling (via nnU-Net's `nnUNetv2_ensemble`) improves
+   robustness across interaction steps and cohorts. FDG and PSMA are always kept separate.
 
 
 FDG and PSMA share the same architecture and training pipeline end to end but are trained fully independently,
@@ -64,13 +65,11 @@ tracer-specific target spacing/patch size chosen automatically by the planner:
 │   ├── model_asynchronous.py            STUNet_MAE model definition
 │   └── train_asynchronous.py            Training script (single-GPU or DDP)
 │
-├── tracer_classification/           Stage — FDG/PSMA routing (not included in this snapshot, see its README)
+├── tracer_classification/           Stage — FDG/PSMA routing via Kalisch et al.'s pretrained classifier (see its README)
 ├── organ_segmentation/              Auxiliary anatomical prior (not included in this snapshot, see its README)
 │
 ├── stage1_lesion_segmentation/      Stage 1 — initial lesion segmentation (wrapper scripts + docs)
 ├── stage2_interactive_refinement/   Stage 2 — scribble-guided refinement (wrapper scripts + docs)
-├── ensembling/                      Fold/checkpoint ensembling docs
-│
 └── nnUNet-2.2/                      Forked nnU-Net v2.2 with STU-Net + curriculum + interactive additions
     └── nnunetv2/
         ├── run/run_finetuning_stunet.py                    Fine-tuning entry point (loads pretrained weights)
@@ -132,7 +131,8 @@ nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c 3d_fullres -t
 nnUNetv2_ensemble -i FOLD0_OUT FOLD1_OUT ... -o ENSEMBLE_OUT
 ```
 
-See [`ensembling/README.md`](ensembling/README.md).
+FDG and PSMA are ensembled separately (never mixed), since each tracer branch is trained independently
+end to end.
 
 ## Results
 
@@ -175,4 +175,5 @@ Final test-set performance will be added after the challenge evaluation.
 
 Apache License 2.0 — see [`LICENSE`](LICENSE). This project is based on
 [nnU-Net](https://github.com/MIC-DKFZ/nnUNet) and [STU-Net](https://github.com/uni-medical/STU-Net), also
-Apache 2.0 licensed. -->
+Apache 2.0 licensed. Tracer routing uses the MIT-licensed classifier from
+[hakal104/autoPETIII](https://github.com/hakal104/autoPETIII/) (see [`tracer_classification/README.md`](tracer_classification/README.md)). -->
