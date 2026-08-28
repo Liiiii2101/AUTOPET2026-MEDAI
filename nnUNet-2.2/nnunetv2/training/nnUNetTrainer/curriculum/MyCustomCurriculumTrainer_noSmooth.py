@@ -7,11 +7,11 @@ from typing import Union
 
 # 导入 nnU-Net 的基础组件
 from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
-from nnunetv2.training.nnUNetTrainer.STUNetTrainer import STUNetTrainer_small_pretrain_location,STUNetTrainer_small_pretrain_STUNet_DualEncoder_gatefuse
+from nnunetv2.training.nnUNetTrainer.stunet.STUNetTrainer import STUNetTrainer_small_pretrain_location,STUNetTrainer_small_pretrain_STUNet_DualEncoder_gatefuse
 from nnunetv2.training.lr_scheduler.warmup import Lin_incr_LRScheduler, PolyLRScheduler_offset
 
 
-class MyCustomCurriculumTrainer(STUNetTrainer_small_pretrain_location):
+class MyCustomCurriculumTrainer_noSmooth(STUNetTrainer_small_pretrain_location):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict,
                  unpack_dataset: bool = True, device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
@@ -23,6 +23,34 @@ class MyCustomCurriculumTrainer(STUNetTrainer_small_pretrain_location):
 
         # STU-Net 的编码器关键字
         self.encoder_key = "conv_blocks_context"
+    
+        def _build_loss(self):
+        # set smooth to 0
+            if self.label_manager.has_regions:
+                loss = DC_and_BCE_loss({},
+                                    {'batch_dice': self.configuration_manager.batch_dice,
+                                        'do_bg': True, 'smooth': 0, 'ddp': self.is_ddp},
+                                    use_ignore_label=self.label_manager.ignore_label is not None,
+                                    dice_class=MemoryEfficientSoftDiceLoss)
+            else:
+                loss = DC_and_CE_loss({'batch_dice': self.configuration_manager.batch_dice,
+                                    'smooth': 0, 'do_bg': False, 'ddp': self.is_ddp}, {}, weight_ce=1, weight_dice=1,
+                                    ignore_label=self.label_manager.ignore_label,
+                                    dice_class=MemoryEfficientSoftDiceLoss)
+
+            if self.enable_deep_supervision:
+                deep_supervision_scales = self._get_deep_supervision_scales()
+
+                # we give each output a weight which decreases exponentially (division by 2) as the resolution decreases
+                # this gives higher resolution outputs more weight in the loss
+                weights = np.array([1 / (2 ** i) for i in range(len(deep_supervision_scales))])
+                weights[-1] = 0
+
+                # we don't use the lowest 2 outputs. Normalize weights so that they sum to 1
+                weights = weights / weights.sum()
+                # now wrap the loss
+                loss = DeepSupervisionWrapper(loss, weights)
+            return loss
 
     def set_freeze_status(self, mode: str):
         """
