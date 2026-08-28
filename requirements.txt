@@ -1,0 +1,6 @@
+# Dependencies for pretrain/. nnU-Net's own dependencies are declared in
+# nnUNet-2.2/setup.py and installed automatically via `pip install -e nnUNet-2.2`.
+torch>=1.12
+numpy
+tqdm
+matplotlib

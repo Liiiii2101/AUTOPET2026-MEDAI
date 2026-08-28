@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+*.so
+
+# Environments
+.venv/
+venv/
+env/
+
+# Data / model artifacts (large, machine-specific — never commit)
+*.npz
+*.nii
+*.nii.gz
+*.pth
+*.pt
+*.model
+*.ckpt
+nnUNet_raw/
+nnUNet_preprocessed/
+nnUNet_results/
+
+# Logs / experiment outputs
+*.log
+runs/
+vis/
+
+# OS / editor cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp
