@@ -11,32 +11,31 @@ corrective scribbles — built inside a modified [nnU-Net v2.2](https://github.c
 
 ![Pipeline overview: MAE pretraining on PET/CT, then per-tracer 1st-stage segmentation (CT + organ context) producing an initial prediction, scribble correction, and a 2nd-stage model producing the final prediction.](docs/assets/pipeline_overview.png)
 
-```
-Pretrain (self-supervised)  →  Tracer routing  →  Stage 1 (initial segmentation)  →  Stage 2 (interactive refinement)  →  Ensemble  →  Predict
- pretraining/                   FDG / PSMA         PET + CT + organ context           + cumulative scribbles              (per tracer)
- asynchronous MAE on             (see note below)   MyCustomCurriculumTrainer          MyCustomCurriculumTrainerSegPreSkel
- CT/PET patches                                     stage1_lesion_segmentation/        stage2_interactive_refinement/
-```
+**During development:**
 
 1. **Pretraining** (`pretraining/`): a 3D masked-autoencoder (`STUNet_MAE`) learns general PET/CT
    representations before any lesion labels are used, masking CT and PET **independently** (asynchronous
    masking) so the encoder must exploit cross-modal, not just spatial, redundancy.
-2. **Tracer routing** (`tracer_classification/`): each study is routed to an FDG- or PSMA-specific branch,
-   since the two tracers differ substantially in uptake pattern and lesion appearance. Routing uses the
-   pretrained tracer classifier published by [Kalisch et al.](https://github.com/hakal104/autoPETIII/) for
-   their AutoPET III submission — see that folder for details and citation.
-3. **Stage 1 — initial segmentation** (`stage1_lesion_segmentation/`): PET + CT + an anatomical organ prior
-   (`organ_segmentation/`) are consumed to produce an initial lesion mask, using an MAE-pretrained STU-Net
-   fine-tuned with a 3-phase curriculum schedule.
-4. **Stage 2 — interactive refinement** (`stage2_interactive_refinement/`): the Stage‑1 prediction is combined
-   with cumulative foreground/background scribbles (simulated during training via skeletonization of the
-   ground-truth mask) and refined by a second network initialized from the Stage‑1 checkpoint.
-5. **Ensembling**: fold- and checkpoint-level ensembling (via nnU-Net's `nnUNetv2_ensemble`) improves
-   robustness across interaction steps and cohorts. FDG and PSMA are always kept separate.
+2. **Organ segmentation model**: trained on CT to predict anatomical organ masks, giving Stage 1 explicit
+   anatomical context to help distinguish physiological uptake from malignant lesions.
+3. **Stage 1 — initial segmentation** (`stage1_lesion_segmentation/`): the encoder is initialized from the
+   MAE-pretrained checkpoint, then fine-tuned on CT + PET + the predicted organ mask (3 input channels) with a
+   3-phase curriculum schedule to produce an initial lesion mask.
+4. **Stage 2 — interactive refinement** (`stage2_interactive_refinement/`): a random number (1–5) of simulated
+   scribbles are generated each iteration and combined with the Stage‑1 prediction as a third input channel
+   alongside CT and PET; a second network, initialized from the finished Stage‑1 checkpoint, is trained to
+   incorporate them.
 
+**During inference:**
 
-FDG and PSMA share the same architecture and training pipeline end to end but are trained fully independently,
-to account for tracer-specific appearance and error modes.
+1. **Tracer classification** (`tracer_classification/`): each study is classified as FDG or PSMA using the
+   pretrained classifier published by [Kalisch et al.](https://github.com/hakal104/autoPETIII/) for their
+   AutoPET III submission — see that folder for details and citation.
+2. **Stage 1**: the tracer-specific Stage‑1 model produces the initial lesion mask.
+3. **Stage 2**: the tracer-specific Stage‑2 model refines it using interactive scribbles.
+
+FDG and PSMA share the same architecture and training pipeline end to end but are trained and run fully
+independently, to account for tracer-specific appearance and error modes.
 
 <!-- ## Data
 
