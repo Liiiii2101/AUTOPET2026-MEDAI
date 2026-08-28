@@ -37,6 +37,8 @@ corrective scribbles — built inside a modified [nnU-Net v2.2](https://github.c
 FDG and PSMA share the same architecture and training pipeline end to end but are trained and run fully
 independently, to account for tracer-specific appearance and error modes.
 
+
+**Model Checkpoints:**
 <!-- ## Data
 
 Trained and evaluated on the official AutoPET V training data only (no external imaging data):
@@ -126,7 +128,7 @@ See [`stage2_interactive_refinement/README.md`](stage2_interactive_refinement/RE
 ### 4. Ensemble and predict
 
 ```bash
-nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c 3d_fullres -tr MyCustomCurriculumTrainerSegPreSkel --save_probabilities
+nnUNetv2_predict -i INPUT_FOLDER -o OUTPUT_FOLDER -d DATASET_ID -c 3d_fullres -tr MyCustomCurriculumTrainerSegPre --save_probabilities
 nnUNetv2_ensemble -i FOLD0_OUT FOLD1_OUT ... -o ENSEMBLE_OUT
 ```
 
