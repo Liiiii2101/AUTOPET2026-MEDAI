@@ -6,6 +6,8 @@ lesion segmentation in whole-body PET/CT). The pipeline pairs a self-supervised 
 anatomical organ prior, and a second interactive stage that refines the initial prediction from sparse
 corrective scribbles — built inside a modified [nnU-Net v2.2](https://github.com/MIC-DKFZ/nnUNet) framework.
 
+> **Looking for the Docker container, trained weights, or build instructions? See [`submission/`](submission/).**
+
 
 ## Pipeline overview
 
