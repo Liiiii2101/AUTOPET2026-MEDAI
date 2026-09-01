@@ -6,7 +6,6 @@ from copy import deepcopy
 from time import sleep
 from typing import Tuple, Union, List, Optional
 import sys
-#sys.path.append(r'/home/x.liang/MyProject/STU-Net/nnUNet-2.2')
 import numpy as np
 import torch
 from acvl_utils.cropping_and_padding.padding import pad_nd_image

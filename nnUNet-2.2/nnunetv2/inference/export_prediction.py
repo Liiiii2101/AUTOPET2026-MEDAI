@@ -33,9 +33,32 @@ def convert_predicted_logits_to_segmentation_with_correct_shape(predicted_logits
                                             properties_dict['spacing'])
     # return value of resampling_fn_probabilities can be ndarray or Tensor but that doesnt matter because
     # apply_inference_nonlin will covnert to torch
-    predicted_probabilities = label_manager.apply_inference_nonlin(predicted_logits)
-    del predicted_logits
-    segmentation = label_manager.convert_probabilities_to_segmentation(predicted_probabilities)
+
+    # --- AutoPET memory optimization -----------------------------------
+    # When only the hard segmentation is wanted (return_probabilities=False)
+    # and the label manager is NOT region-based, skip materializing
+    # softmax(logits) entirely and argmax the (already resampled) logits
+    # directly. This is mathematically EXACT, not an approximation: softmax
+    # over the class axis is strictly monotonic per voxel, so
+    # argmax(logits) == argmax(softmax(logits)) at every voxel - and
+    # resampling has already happened above, before this point, so skipping
+    # the nonlin doesn't change the resampling either. It only skips
+    # allocating a second full-size float32 array that nothing downstream
+    # ever reads - on a many-class model (e.g. an 11-class organ model) over
+    # a large volume that's a multi-GB allocation for zero benefit. Falls
+    # back to the original (correct) path whenever real probability values
+    # are actually needed (return_probabilities=True) or the label manager
+    # is region-based (sigmoid, overlapping labels), where this equivalence
+    # does not hold.
+    if (not return_probabilities) and (not label_manager.has_regions):
+        if isinstance(predicted_logits, np.ndarray):
+            predicted_logits = torch.from_numpy(predicted_logits)
+        segmentation = predicted_logits.argmax(0)
+        del predicted_logits
+    else:
+        predicted_probabilities = label_manager.apply_inference_nonlin(predicted_logits)
+        del predicted_logits
+        segmentation = label_manager.convert_probabilities_to_segmentation(predicted_probabilities)
 
     # segmentation may be torch.Tensor but we continue with numpy
     if isinstance(segmentation, torch.Tensor):

@@ -201,11 +201,39 @@ class STUNetTrainer_small_pretrain_location(STUNetTrainer):
         # '/projects/whole_body_PET_CT_segmentation/nnUNetFrame/DATASET/nnUNet_trained_models/Dataset226_uni_seg/STUNetTrainer_small_VIT_cat__nnUNetPlans__3d_fullres/pretrain_MAE3D/best_encoder.pth' MAE3D
         # '/projects/whole_body_PET_CT_segmentation/nnUNetFrame/DATASET/nnUNet_trained_models/Dataset226_uni_seg/STUNetTrainer_small_VIT_cat__nnUNetPlans__3d_fullres/pretrain_MAE3D/final_encoder_swin.pth' swin
         # '/projects/whole_body_PET_CT_segmentation/nnUNetFrame/DATASET/nnUNet_trained_models/Dataset226_uni_seg/STUNetTrainer_small_VIT_cat__nnUNetPlans__3d_fullres/pretrain_voco/latest_student_encoder.pth'
-        print('psma pretrain encoder loading...')
-        model.load_pretrained_encoder(
-            encoder_ckpt_path="/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base_jiaju_dataloader/psma/mae_last_Spark3D_asy8.pth", #"/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base_jiaju_dataloader/headnector/mae_last_Spark3D_asy5.pth",#"/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base_jiaju_dataloader/psma/mae_last_Spark3D_asy8.pth",#'/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base_jiaju_dataloader/psma/mae_last_Spark3D_asy.pth',#'/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base/mae_checkpoints/mae_last_Spark3D_asy.pth',#mae_last_Spark3D.pth
-            map_location='cuda'  # 或 'cpu'
-        )
+        # path  =  "/projects/lcy_data/pet_ct_challenge/autopet2026/results/psma/Dataset245_AutoPET_psma/MyCustomCurriculumTrainer__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth"#"/projects/lcy_data/pet_ct_challenge/autopet2026/results/fdg/organ/zscore/Dataset100_autopet/MyCustomCurriculumTrainer__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth"#"/projects/lcy_data/pet_ct_challenge/autopet2026/results/psma/Dataset245_AutoPET_psma/MyCustomCurriculumTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth"#'/projects/lcy_data/pet_ct_challenge/autopet2026/results/fdg/organ/zscore/Dataset100_autopet/MyCustomCurriculumTrainer__nnUNetPlans__3d_fullres/fold_0_1000/checkpoint_final.pth'
+        # # model = torch.load(path, map_location=map_location)
+        # # 1. Get the current state dict of the newly initialized model
+        # # 1. First, look for where the checkpoint file is actually loaded. 
+        # # It usually looks something like this in nnUNet:
+        # checkpoint = torch.load(path, map_location='cuda')
+
+        # # 2. Extract the original state_dict from the checkpoint object
+        # # (nnUNet checkpoints usually store the weights under the 'network_weights' key)
+        # if 'network_weights' in checkpoint:
+        #     state_dict = checkpoint['network_weights']
+        # else:
+        #     state_dict = checkpoint
+
+        # # 3. NOW you can safely run the shape-checking filter logic!
+        # model_dict = model.state_dict()
+        # filtered_state_dict = {
+        #     k: v for k, v in state_dict.items() 
+        #     if k in model_dict and v.shape == model_dict[k].shape
+        # }
+
+        # # 4. Print skipped keys for tracking
+        # skipped_keys = [k for k in state_dict.keys() if k not in filtered_state_dict]
+        # if skipped_keys:
+        #     print(f"Skipped loading {len(skipped_keys)} keys due to shape mismatch: {skipped_keys}")
+
+        # # 5. Finally, load the filtered weights into the model
+        # model.load_state_dict(filtered_state_dict, strict=False)
+        # # model = torch.load(path, map_location=map_location)
+        # # model.load_pretrained_encoder(
+        # #     encoder_ckpt_path='/projects/lcy_data/pet_ct_challenge/autopet2026/results/fdg/organ/zscore/Dataset100_autopet/MyCustomCurriculumTrainer__nnUNetPlans__3d_fullres/fold_0_1000/checkpoint_final.pth',#'/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base_jiaju_dataloader/fdg/mae_last_Spark3D_asy.pth',#'/projects/lcy_data/pet_ct_challenge/xinglong/MAE_base/mae_checkpoints/mae_last_Spark3D_asy.pth',#mae_last_Spark3D.pth
+        #     map_location='cuda'  # 或 'cpu'
+        # )
         return model
 
 class STUNetTrainer_small_pretrain_STUNet_DualEncoder_gatefuse(STUNetTrainer):

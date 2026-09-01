@@ -38,7 +38,11 @@ FDG and PSMA share the same architecture and training pipeline end to end but ar
 independently, to account for tracer-specific appearance and error modes.
 
 
-**Model Checkpoints:**
+**Model Checkpoints:** trained weights, the Dockerfile, and the exact inference code
+that produced our final-test-set submission are in [`submission/`](submission/) —
+see [`submission/README.md`](submission/README.md) for the per-model fold list and
+build instructions. Weights are hosted externally (linked there) and fetched by
+`submission/download_weights.sh`; they aren't committed to this repo directly.
 <!-- ## Data
 
 Trained and evaluated on the official AutoPET V training data only (no external imaging data):
@@ -71,13 +75,13 @@ tracer-specific target spacing/patch size chosen automatically by the planner:
 │
 ├── stage1_lesion_segmentation/      Stage 1 — initial lesion segmentation (wrapper scripts + docs)
 ├── stage2_interactive_refinement/   Stage 2 — scribble-guided refinement (wrapper scripts + docs)
+├── submission/                      Grand Challenge inference container: Dockerfile, entrypoint code,
+│                                    weights download script - see submission/README.md
 └── nnUNet-2.2/                      Forked nnU-Net v2.2 with STU-Net + curriculum + interactive additions
     └── nnunetv2/
         ├── run/run_finetuning_stunet.py                    Fine-tuning entry point (loads pretrained weights)
         ├── training/dataloading/data_loader_3d_interactive.py   Skeleton-based scribble simulation
-        └── training/nnUNetTrainer/
-            ├── stunet/          STU-Net backbones (Stage 1 & 2 network variants)
-            └── curriculum/      Curriculum-scheduled trainers (Stage 1 & 2 training loops)
+        └── training/nnUNetTrainer/    STU-Net backbones + curriculum-scheduled trainers (Stage 1 & 2)
 ```
 
 See [`nnUNet-2.2/readme.md`](nnUNet-2.2/readme.md) for exactly what was changed relative to upstream nnU-Net,

@@ -7,17 +7,17 @@ from typing import Union
 
 # 导入 nnU-Net 的基础组件
 from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
-from nnunetv2.training.nnUNetTrainer.stunet.STUNetTrainer import STUNetTrainer_small_pretrain_location,STUNetTrainer_small_pretrain_STUNet_DualEncoder_gatefuse
+from nnunetv2.training.nnUNetTrainer.STUNetTrainerSegPre import STUNetTrainer_small_pretrain_location,STUNetTrainer_small_pretrain_STUNet_DualEncoder_gatefuse
 from nnunetv2.training.lr_scheduler.warmup import Lin_incr_LRScheduler, PolyLRScheduler_offset
 
 
-class MyCustomCurriculumTrainer(STUNetTrainer_small_pretrain_location):
+class MyCustomCurriculumTrainerSegPre(STUNetTrainer_small_pretrain_location):
     def __init__(self, plans: dict, configuration: str, fold: int, dataset_json: dict,
                  unpack_dataset: bool = True, device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
 
         # --- 遵循 CVPR 2025 论文的阶段定义 ---
-        self.stage_1_end = 50   # 阶段 1：仅解码器预热 (0-50 epoch)
+        self.stage_1_end = 10#50   # 阶段 1：仅解码器预热 (0-50 epoch)
         self.stage_2_end = 100  # 阶段 2：全网联合预热 (50-100 epoch)
         self.initial_lr = 1e-4  # 论文建议微调使用较低的学习率 (如 1e-3 或 1e-4) [cite: 243, 252]
 

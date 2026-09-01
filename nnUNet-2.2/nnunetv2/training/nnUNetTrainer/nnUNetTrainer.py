@@ -575,7 +575,7 @@ class nnUNetTrainer(object):
             if not isfile(splits_file):
                 self.print_to_log_file("Creating new 5-fold cross-validation split...")
                 all_keys_sorted = list(np.sort(list(dataset.keys())))
-                splits = generate_crossval_split(all_keys_sorted, seed=12345, n_splits=5) ###hardcoed for hecktor
+                splits = generate_crossval_split(all_keys_sorted, seed=12345, n_splits=5)
                 save_json(splits, splits_file)
 
             else:
