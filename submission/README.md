@@ -8,13 +8,25 @@ plus everything needed to rebuild it.
 
 ```bash
 cd AUTOPET2026-MEDAI          # repo root
-bash submission/download_weights.sh
-docker build --platform=linux/amd64 -f submission/Dockerfile -t autopet_interactive_submit .
+bash submission/build.sh      # fetches weights (if missing) + docker build
 ```
 
-`download_weights.sh` fetches the trained weights from Google Drive (~5.5GB) into
-`submission/weights/`, in the layout the Dockerfile expects. Weights are not
-committed to git (see `.gitignore`) - they're too large for a repo.
+This builds the image tagged `autopet_interactive_submit`. `build.sh` calls
+`download_weights.sh` automatically the first time (fetches trained weights
+from Google Drive, ~5.5GB, into `submission/weights/` — not committed to git,
+see `.gitignore`, too large for a repo) and then runs the equivalent of:
+
+```bash
+docker buildx build --platform=linux/amd64 -f submission/Dockerfile -t autopet_interactive_submit --load .
+```
+
+To also save the built image as a gzipped tarball (e.g. for direct upload
+instead of a repo-based build), use `export.sh` instead, which calls
+`build.sh` and then `docker save`s the result:
+
+```bash
+bash submission/export.sh     # -> submission/autopet_interactive_submit.tar.gz
+```
 
 ## What's in the image
 
